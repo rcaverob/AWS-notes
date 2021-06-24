@@ -1,7 +1,7 @@
 import React from 'react';
 import { Text, View, StyleSheet, Button } from 'react-native';
 
-function NoteComponent({ title, content, deleteNote }) {
+function NoteComponent({ title, content, deleteNote, openEditModal }) {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>{title}</Text>
@@ -9,6 +9,12 @@ function NoteComponent({ title, content, deleteNote }) {
       <View style={styles.footer}>
         <View style={styles.buttonContainer}>
           <Button title="Delete" onPress={deleteNote}></Button>
+        </View>
+        <View style={styles.buttonContainer}>
+          <Button
+            title="Edit"
+            onPress={() => openEditModal(title, content)}
+          ></Button>
         </View>
       </View>
     </View>
@@ -24,11 +30,19 @@ const styles = StyleSheet.create({
   title: {
     padding: 5,
     fontWeight: 'bold',
-    fontSize: 13,
+    fontSize: 16,
   },
   content: {
     padding: 8,
-    fontSize: 11,
+    fontSize: 14,
+  },
+  footer: {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-evenly',
+  },
+  buttonContainer: {
+    width: '45%',
   },
 });
 

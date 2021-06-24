@@ -4,6 +4,8 @@ Amplify.configure(config);
 
 import React, { useState, useEffect } from 'react';
 import NoteComponent from './src/components/NoteComponent';
+import EditNoteModal from './src/components/EditNoteModal';
+
 import {
   Text,
   View,
@@ -11,12 +13,15 @@ import {
   Button,
   StyleSheet,
   LogBox,
+  Modal,
+  Keyboard,
+  Platform,
 } from 'react-native';
 import { DataStore } from '@aws-amplify/datastore';
 import { Note } from './src/models';
 
 // To ignore Android warning about using long timers (used by AWS Datastore observe)
-LogBox.ignoreLogs(['Setting a timer']);
+if (LogBox) LogBox.ignoreLogs(['Setting a timer']);
 
 const initialFormState = {
   title: '',
@@ -24,16 +29,21 @@ const initialFormState = {
 };
 
 export default function App() {
+  // To create notes
   const [formState, setFormState] = useState(initialFormState);
+
+  // To edit notes
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [editFormState, setEditFormState] = useState(initialFormState);
+  const [noteBeingEdited, setNoteBeingEdited] = useState(null);
   const [notes, setNotes] = useState([]);
 
   // Synchronize with the cloud Datastore
   useEffect(() => {
-    // Initial fetch
     fetchNotes();
     const subscription = DataStore.observe(Note).subscribe(() => fetchNotes());
     return () => subscription.unsubscribe();
-  });
+  }, []);
 
   function onFormChange(key, value) {
     setFormState({ ...formState, [key]: value });
@@ -45,6 +55,7 @@ export default function App() {
   }
 
   async function createNote() {
+    Keyboard.dismiss();
     if (!formState.title) return;
     await DataStore.save(new Note({ ...formState }));
     setFormState(initialFormState);
@@ -52,6 +63,34 @@ export default function App() {
 
   async function deleteNote(note) {
     await DataStore.delete(note);
+  }
+
+  async function updateNote(note, newTitle, newContent) {
+    await DataStore.save(
+      Note.copyOf(note, (updated) => {
+        updated.title = newTitle;
+        updated.content = newContent;
+      })
+    );
+  }
+
+  // Open the Note Editing modal
+  function openEditModal(note) {
+    setEditFormState({ title: note.title, content: note.content });
+    setNoteBeingEdited(note);
+    setEditModalVisible(true);
+  }
+
+  // Close Note modal and clear form
+  function closeEditModal() {
+    setEditFormState(initialFormState);
+    setEditModalVisible(false);
+  }
+
+  // Close the Note Editing modal and update Note
+  function handleEditConfirm() {
+    updateNote(noteBeingEdited, editFormState.title, editFormState.content);
+    closeEditModal();
   }
 
   return (
@@ -77,8 +116,30 @@ export default function App() {
           title={note.title}
           content={note.content}
           deleteNote={() => deleteNote(note)}
+          openEditModal={() => openEditModal(note)}
         />
       ))}
+
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={editModalVisible}
+        presentationStyle="overFullScreen"
+        onRequestClose={() => {
+          setEditModalVisible(!editModalVisible);
+        }}
+      >
+        {Platform.OS !== 'web' && (
+          <EditNoteModal
+            {...{
+              editFormState,
+              setEditFormState,
+              handleEditConfirm,
+              closeEditModal,
+            }}
+          />
+        )}
+      </Modal>
     </View>
   );
 }
