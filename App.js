@@ -4,9 +4,19 @@ Amplify.configure(config);
 
 import React, { useState, useEffect } from 'react';
 import NoteComponent from './src/components/NoteComponent';
-import { Text, View, TextInput, Button, StyleSheet } from 'react-native';
+import {
+  Text,
+  View,
+  TextInput,
+  Button,
+  StyleSheet,
+  LogBox,
+} from 'react-native';
 import { DataStore } from '@aws-amplify/datastore';
 import { Note } from './src/models';
+
+// To ignore Android warning about using long timers (used by AWS Datastore observe)
+LogBox.ignoreLogs(['Setting a timer']);
 
 const initialFormState = {
   title: '',
@@ -19,6 +29,8 @@ export default function App() {
 
   // Synchronize with the cloud Datastore
   useEffect(() => {
+    // Initial fetch
+    fetchNotes();
     const subscription = DataStore.observe(Note).subscribe(() => fetchNotes());
     return () => subscription.unsubscribe();
   });
@@ -29,7 +41,6 @@ export default function App() {
 
   async function fetchNotes() {
     const notes = await DataStore.query(Note);
-    console.log(notes);
     setNotes(notes);
   }
 
