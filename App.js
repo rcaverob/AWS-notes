@@ -39,6 +39,10 @@ export default function App() {
     setFormState(initialFormState);
   }
 
+  async function deleteNote(note) {
+    await DataStore.delete(note);
+  }
+
   return (
     <View style={styles.container}>
       <Text style={styles.heading}>My Notes</Text>

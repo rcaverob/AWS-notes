@@ -1,11 +1,16 @@
 import React from 'react';
-import { Text, View, StyleSheet } from 'react-native';
+import { Text, View, StyleSheet, Button } from 'react-native';
 
-function NoteComponent({ title, content }) {
+function NoteComponent({ title, content, deleteNote }) {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>{title}</Text>
       <Text style={styles.content}>{content}</Text>
+      <View style={styles.footer}>
+        <View style={styles.buttonContainer}>
+          <Button title="Delete" onPress={deleteNote}></Button>
+        </View>
+      </View>
     </View>
   );
 }
